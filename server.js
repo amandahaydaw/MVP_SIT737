@@ -1,196 +1,239 @@
-var express = require("express");
-var app = express();
-var cfenv = require("cfenv");
-var bodyParser = require('body-parser')
+let express = require("express");
 
-// parse application/x-www-form-urlencoded
-app.use(bodyParser.urlencoded({ extended: false }))
+let app = express();
+const mongoose = require("mongoose");
+const passport = require("passport");
+const session = require('express-session');
+const appID = require("ibmcloud-appid");
+let http = require('http').createServer(app);
+let io = require('socket.io')(http);
+const bodyParser = require("body-parser");
+const bcrypt = require("bcryptjs");
+const user = require('./DB/models/user.js');
+// const jwt = require('jsonwebtoken');
+const uri = require('./configurations/env.js');
+const JWT_SECRET = require('./configurations/env.js');
+// const CALLBACK_URL = "/signin.html";
+const CALLBACK_URL = "/ibm/cloud/appid/callback";
+var port = process.env.PORT || 8080;
+const WebAppStrategy = appID.WebAppStrategy;
+app.use(express.static(__dirname + '/public'));
+app.use(session({
+    secret: '123456',
+    resave: true,
+    saveUninitialized: true,
+    proxy: true
+}));
+app.use(passport.initialize());
+app.use(passport.session());
 
-// parse application/json
-app.use(bodyParser.json())
 
-let mydb, cloudant;
-var vendor; // Because the MongoDB and Cloudant use different API commands, we
-            // have to check which command should be used based on the database
-            // vendor.
-var dbName = 'mydb';
 
-// Separate functions are provided for inserting/retrieving content from
-// MongoDB and Cloudant databases. These functions must be prefixed by a
-// value that may be assigned to the 'vendor' variable, such as 'mongodb' or
-// 'cloudant' (i.e., 'cloudantInsertOne' and 'mongodbInsertOne')
 
-var insertOne = {};
-var getAll = {};
 
-insertOne.cloudant = function(doc, response) {
-  mydb.insert(doc, function(err, body, header) {
-    if (err) {
-      console.log('[mydb.insert] ', err.message);
-      response.send("Error");
-      return;
-    }
-    doc._id = body.id;
-    response.send(doc);
-  });
-}
 
-getAll.cloudant = function(response) {
-  var names = [];  
-  mydb.list({ include_docs: true }, function(err, body) {
-    if (!err) {
-      body.rows.forEach(function(row) {
-        if(row.doc.name)
-          names.push(row.doc.name);
-      });
-      response.json(names);
-    }
-  });
-  //return names;
-}
+let webAppStrategy = new WebAppStrategy(getAppId());
+passport.use(webAppStrategy);
 
-let collectionName = 'mycollection'; // MongoDB requires a collection name.
+passport.serializeUser((user, cb) => cb(null, user));
+passport.deserializeUser((obj, cb) => cb(null, obj));
 
-insertOne.mongodb = function(doc, response) {
-  mydb.collection(collectionName).insertOne(doc, function(err, body, header) {
-    if (err) {
-      console.log('[mydb.insertOne] ', err.message);
-      response.send("Error");
-      return;
-    }
-    doc._id = body.id;
-    response.send(doc);
-  });
-}
+app.get(CALLBACK_URL, passport.authenticate(WebAppStrategy.STRATEGY_NAME, { failureRedirect: '/error' }));
+app.use("/protected", passport.authenticate(WebAppStrategy.STRATEGY_NAME));
+app.use('/protected', express.static("protected"));
 
-getAll.mongodb = function(response) {
-  var names = [];
-  mydb.collection(collectionName).find({}, {fields:{_id: 0, count: 0}}).toArray(function(err, result) {
-    if (!err) {
-      result.forEach(function(row) {
-        names.push(row.name);
-      });
-      response.json(names);
-    }
-  });
-}
-
-/* Endpoint to greet and add a new visitor to database.
-* Send a POST request to localhost:3000/api/visitors with body
-* {
-*   "name": "Bob"
-* }
-*/
-app.post("/api/visitors", function (request, response) {
-  var userName = request.body.name;
-  var doc = { "name" : userName };
-  if(!mydb) {
-    console.log("No database.");
-    response.send(doc);
-    return;
-  }
-  insertOne[vendor](doc, response);
+app.get("/logout", (req, res) => {
+    WebAppStrategy.logout(req);
+    res.redirect("/home.html");
 });
 
-/**
- * Endpoint to get a JSON array of all the visitors in the database
- * REST API example:
- * <code>
- * GET http://localhost:3000/api/visitors
- * </code>
- *
- * Response:
- * [ "Bob", "Jane" ]
- * @return An array of all the visitor names
- */
-app.get("/api/visitors", function (request, response) {
-  var names = [];
-  if(!mydb) {
-    response.json(names);
-    return;
-  }
-  getAll[vendor](response);
-});
+app.use(bodyParser.json()) //converting to json payload
 
-// load local VCAP configuration  and service credentials
-var vcapLocal;
-try {
-  vcapLocal = require('./vcap-local.json');
-  console.log("Loaded local VCAP", vcapLocal);
-} catch (e) { }
+mongoose.connect(uri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useCreateIndex: true
+})
 
-const appEnvOpts = vcapLocal ? { vcap: vcapLocal} : {}
 
-const appEnv = cfenv.getAppEnv(appEnvOpts);
-
-if (appEnv.services['compose-for-mongodb'] || appEnv.getService(/.*[Mm][Oo][Nn][Gg][Oo].*/)) {
-  // Load the MongoDB library.
-  var MongoClient = require('mongodb').MongoClient;
-
-  dbName = 'mydb';
-
-  // Initialize database with credentials
-  if (appEnv.services['compose-for-mongodb']) {
-    MongoClient.connect(appEnv.services['compose-for-mongodb'][0].credentials.uri, null, function(err, db) {
-      if (err) {
-        console.log(err);
-      } else {
-        mydb = db.db(dbName);
-        console.log("Created database: " + dbName);
-      }
-    });
-  } else {
-    // user-provided service with 'mongodb' in its name
-    MongoClient.connect(appEnv.getService(/.*[Mm][Oo][Nn][Gg][Oo].*/).credentials.uri, null,
-      function(err, db) {
-        if (err) {
-          console.log(err);
-        } else {
-          mydb = db.db(dbName);
-          console.log("Created database: " + dbName);
+//Serves the identity token payload
+app.get("/protected/api/idPayload", async(req, res) => {
+    res.send(req.session[WebAppStrategy.AUTH_CONTEXT].identityTokenPayload);
+    let email = res.req.user.email
+    let name = res.req.user.name
+    req.body = { email, name }
+        // const password = await bcrypt.hash(plainTextPassword, 10) //fix length of password
+    try {
+        const response = await user.create({
+                email,
+                name //,
+                // password
+            })
+            // console.log('User created successfully: ', response)
+    } catch (error) {
+        if (error.code === 11000) {
+            // duplicate key
+            return res.json({ status: 'error', error: 'Username already in use' })
         }
-      }
-    );
-  }
+        throw error
+    }
 
-  vendor = 'mongodb';
-} else if (appEnv.services['cloudantNoSQLDB'] || appEnv.getService(/[Cc][Ll][Oo][Uu][Dd][Aa][Nn][Tt]/)) {
-  // Load the Cloudant library.
-  var Cloudant = require('@cloudant/cloudant');
 
-  // Initialize database with credentials
-  if (appEnv.services['cloudantNoSQLDB']) {
-    // CF service named 'cloudantNoSQLDB'
-    cloudant = Cloudant(appEnv.services['cloudantNoSQLDB'][0].credentials);
-  } else {
-     // user-provided service with 'cloudant' in its name
-     cloudant = Cloudant(appEnv.getService(/cloudant/).credentials);
-  }
-} else if (process.env.CLOUDANT_URL){
-  cloudant = Cloudant(process.env.CLOUDANT_URL);
-}
-if(cloudant) {
-  //database name
-  dbName = 'mydb';
-
-  // Create a new "mydb" database.
-  cloudant.db.create(dbName, function(err, data) {
-    if(!err) //err if database doesn't already exists
-      console.log("Created database: " + dbName);
-  });
-
-  // Specify the database we are going to use (mydb)...
-  mydb = cloudant.db.use(dbName);
-
-  vendor = 'cloudant';
-}
-
-//serve static file (index.html, images, css)
-app.use(express.static(__dirname + '/views'));
+})
 
 
 
-var port = process.env.PORT || 3000
-app.listen(port, function() {
-    console.log("To view your app, open this link in your browser: http://localhost:" + port);
+app.get('/error', (req, res) => {
+    res.send('Authentication Error');
 });
+
+// passport.use(new WebAppStrategy({
+//     clientId: "e6ccd665-ddc6-40e0-887d-cbc51025bae5",
+//     tenantId: "a05e4069-b9c8-4286-b9e3-d6c79451561d",
+//     secret: "NDM5M2Q2ZjEtODEzOC00ZDZlLWI3NjMtMGMzYmFjOThlNjQy",
+//     name: "MyMedicine",
+//     oAuthServerUrl: "https://au-syd.appid.cloud.ibm.com/oauth/v4/a05e4069-b9c8-4286-b9e3-d6c79451561d",
+//     redirectUri: "https://localhost:8080/home.html"
+// }));
+//this to block my wedsite
+// app.use(passport.authenticate(WebAppStrategy.STRATEGY_NAME))
+
+
+
+
+// let Name, Email, user, Username, Password, DOB, gender, Phone
+
+// const insertMessage = (user) => {
+//     try {
+//         collectionMessage.insertOne({
+//             Name: user.Name,
+//             Email: user.Email,
+//             Username: user.Username,
+//             Password: user.Password,
+//             DOB: user.DOB,
+//             gender: user.gender,
+//             Phone: user.Phone
+//         });
+
+//     } catch (e) {
+//         console.log(e)
+//     }
+
+// }
+
+// app.get("/UserLogin", function(request, response) {
+//     // var user_name = request.query.user_name;
+//     // response.end("Hello " + user_name + "!");
+
+//     response.sendFile(__dirname + '/public/SignIn.html');
+// });
+
+
+
+// app.post('/api/login', async(req, res) => {
+//     const { email, password } = req.body
+//     const users = await user.findOne({ email }).lean()
+
+//     if (!users) {
+//         return res.json({ status: 'error', error: 'Invalid username/password' })
+//     }
+
+//     if (await bcrypt.compare(password, users.password)) {
+//         // the username, password combination is successful
+
+//         const token = jwt.sign({
+//                 id: users._id,
+//                 email: users.email
+//             },
+//             JWT_SECRET
+//         )
+//         return res.json({ status: 'ok', data: token })
+
+//     } else {
+
+//         res.json({ status: 'error', error: 'Invalid Email/password' })
+//     }
+// })
+// app.post('/api/register', async(req, res) => {
+
+//     const { email, password: plainTextPassword, username, PhoneNumber } = req.body
+//     if (!email || typeof email !== 'string') {
+//         return res.json({ status: 'error', error: 'Invalid Email' })
+//     }
+
+//     if (!plainTextPassword || typeof plainTextPassword !== 'string') {
+//         return res.json({ status: 'error', error: 'Invalid password' })
+//     }
+
+//     if (plainTextPassword.length < 5) {
+//         return res.json({
+//             status: 'error',
+//             error: 'Password too small. Should be atleast 6 characters'
+//         })
+//     }
+//     const password = await bcrypt.hash(plainTextPassword, 10) //fix length of password
+
+
+
+//     try {
+//         const response = await user.create({
+//             email,
+//             password,
+//             username,
+//             PhoneNumber
+//         })
+//         console.log('User created successfully: ', response)
+//     } catch (error) {
+//         if (error.code === 11000) {
+//             // duplicate key
+//             return res.json({ status: 'error', error: 'Username already in use' })
+//         }
+//         throw error
+//     }
+//     res.json({ status: 'ok' })
+
+
+
+// })
+
+
+//socket test
+io.on('connection', (socket) => {
+    console.log('a user connected');
+    socket.on('disconnect', () => {
+        console.log('user disconnected');
+    });
+    setInterval(() => {
+        socket.emit('number', parseInt(Math.random() * 10));
+    }, 1000);
+
+});
+
+function getAppId() {
+    let config;
+
+    try {
+        // if running locally we'll have the local config file
+        config = require('./configurations/APPID.json');
+    } catch (e) {
+        if (process.env.APPID_SERVICE_BINDING) { // if running on Kubernetes this env variable would be defined
+            config = JSON.parse(process.env.APPID_SERVICE_BINDING);
+            config.redirectUri = process.env.redirectUri;
+        } else { // running on CF
+            let vcapApplication = JSON.parse(process.env["VCAP_APPLICATION"]);
+            return { "redirectUri": "https://" + vcapApplication["application_uris"][0] + CALLBACK_URL };
+        }
+    }
+    return config;
+}
+
+
+
+var server = app.listen(port, function() {
+    console.log(' Server listening on http://' + "localhost" + ':' + port + "/home.html")
+});
+
+
+
+//this is only needed for Cloud foundry 
+require("cf-deployment-tracker-client").track();

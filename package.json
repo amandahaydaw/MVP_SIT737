@@ -1,5 +1,5 @@
 {
-  "name": "get-started-node",
+  "name": "MVP_SIT737",
   "main": "server.js",
   "description": "An introduction to developing Node.js apps on the IBM Cloud platform",
   "version": "0.1.1",
@@ -12,16 +12,24 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/IBM-Cloud/get-started-node"
+    "url": "https://github.com/amandahaydaw/MVP_SIT737"
   },
   "dependencies": {
-    "@cloudant/cloudant": "^3.0.2",
-    "body-parser": "^1.17.x",
-    "cfenv": "^1.0.x",
-    "dotenv": "^4.0.0",
-    "express": "^4.15.x",
-    "mongodb": "^3.0.10"
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.19.0",
+    "cf-deployment-tracker-client": "*",
+    "commander": "^2.6.0",
+    "express": "^4.14.1",
+    "express-session": "^1.17.1",
+    "http-post": "^0.1.1",
+    "http-proxy": "^1.8.1",
+    "ibmcloud-appid": "^6.1.1",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^5.12.4",
+    "mongoose-delete": "^0.5.3",
+    "passport": "^0.4.1",
+    "socket.io": "^2.3.0"
   },
-  "author": "IBM Corp",
+  "author": "amanda haydaw",
   "license": "Apache-2.0"
 }
