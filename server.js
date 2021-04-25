@@ -124,80 +124,80 @@ app.get('/error', (req, res) => {
 
 // }
 
-// app.get("/UserLogin", function(request, response) {
-//     // var user_name = request.query.user_name;
-//     // response.end("Hello " + user_name + "!");
+app.get("/UserLogin", function(request, response) {
+    // var user_name = request.query.user_name;
+    // response.end("Hello " + user_name + "!");
 
-//     response.sendFile(__dirname + '/public/SignIn.html');
-// });
-
-
-
-// app.post('/api/login', async(req, res) => {
-//     const { email, password } = req.body
-//     const users = await user.findOne({ email }).lean()
-
-//     if (!users) {
-//         return res.json({ status: 'error', error: 'Invalid username/password' })
-//     }
-
-//     if (await bcrypt.compare(password, users.password)) {
-//         // the username, password combination is successful
-
-//         const token = jwt.sign({
-//                 id: users._id,
-//                 email: users.email
-//             },
-//             JWT_SECRET
-//         )
-//         return res.json({ status: 'ok', data: token })
-
-//     } else {
-
-//         res.json({ status: 'error', error: 'Invalid Email/password' })
-//     }
-// })
-// app.post('/api/register', async(req, res) => {
-
-//     const { email, password: plainTextPassword, username, PhoneNumber } = req.body
-//     if (!email || typeof email !== 'string') {
-//         return res.json({ status: 'error', error: 'Invalid Email' })
-//     }
-
-//     if (!plainTextPassword || typeof plainTextPassword !== 'string') {
-//         return res.json({ status: 'error', error: 'Invalid password' })
-//     }
-
-//     if (plainTextPassword.length < 5) {
-//         return res.json({
-//             status: 'error',
-//             error: 'Password too small. Should be atleast 6 characters'
-//         })
-//     }
-//     const password = await bcrypt.hash(plainTextPassword, 10) //fix length of password
+    response.sendFile(__dirname + '/public/SignIn.html');
+});
 
 
 
-//     try {
-//         const response = await user.create({
-//             email,
-//             password,
-//             username,
-//             PhoneNumber
-//         })
-//         console.log('User created successfully: ', response)
-//     } catch (error) {
-//         if (error.code === 11000) {
-//             // duplicate key
-//             return res.json({ status: 'error', error: 'Username already in use' })
-//         }
-//         throw error
-//     }
-//     res.json({ status: 'ok' })
+app.post('/api/login', async(req, res) => {
+    const { email, password } = req.body
+    const users = await user.findOne({ email }).lean()
+
+    if (!users) {
+        return res.json({ status: 'error', error: 'Invalid username/password' })
+    }
+
+    if (await bcrypt.compare(password, users.password)) {
+        // the username, password combination is successful
+
+        const token = jwt.sign({
+                id: users._id,
+                email: users.email
+            },
+            JWT_SECRET
+        )
+        return res.json({ status: 'ok', data: token })
+
+    } else {
+
+        res.json({ status: 'error', error: 'Invalid Email/password' })
+    }
+})
+app.post('/api/register', async(req, res) => {
+
+    const { email, password: plainTextPassword, username, PhoneNumber } = req.body
+    if (!email || typeof email !== 'string') {
+        return res.json({ status: 'error', error: 'Invalid Email' })
+    }
+
+    if (!plainTextPassword || typeof plainTextPassword !== 'string') {
+        return res.json({ status: 'error', error: 'Invalid password' })
+    }
+
+    if (plainTextPassword.length < 5) {
+        return res.json({
+            status: 'error',
+            error: 'Password too small. Should be atleast 6 characters'
+        })
+    }
+    const password = await bcrypt.hash(plainTextPassword, 10) //fix length of password
 
 
 
-// })
+    try {
+        const response = await user.create({
+            email,
+            password,
+            username,
+            PhoneNumber
+        })
+        console.log('User created successfully: ', response)
+    } catch (error) {
+        if (error.code === 11000) {
+            // duplicate key
+            return res.json({ status: 'error', error: 'Username already in use' })
+        }
+        throw error
+    }
+    res.json({ status: 'ok' })
+
+
+
+})
 
 
 //socket test
