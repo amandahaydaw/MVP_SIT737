@@ -6,8 +6,8 @@ const Schema = mongoose.Schema;
 const medicationSchema = new Schema({
 
     medicationName: { type: String, required: true, unique: true },
-    Dosage: { type: Number, required: true },
-    Time: { type: Time, required: true },
+    Dosage: { type: String, required: true },
+    // Time: { type: Time, required: true },
     Days: { type: String, required: true },
     repeat: { type: Number, required: true }
 

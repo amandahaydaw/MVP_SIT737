@@ -5,6 +5,7 @@ This is a sample of MVP pf SIT373 project demostarting a browser app for medicat
 ##Prerequisites:
 npm install
 Environment variables updated under configuration folder 
+Jest dependeices 
 
 ##Installation:
 git clone git@github.com:amandahaydaw/MVP_SIT737.git
@@ -15,4 +16,10 @@ cd MVP_SIT737
 
 ##Run:
 npm start
+
+##For testing 
+Navigate to Test folder 
+
+##Run:
+jest 
 
