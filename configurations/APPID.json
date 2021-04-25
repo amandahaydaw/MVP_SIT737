@@ -1,12 +1,13 @@
+
 {
-    "clientId": "e6ccd665-ddc6-40e0-887d-cbc51025bae5",
-    "tenantId": "a05e4069-b9c8-4286-b9e3-d6c79451561d",
-    "secret": "NDM5M2Q2ZjEtODEzOC00ZDZlLWI3NjMtMGMzYmFjOThlNjQy",
+    "clientId": "${clientId}",
+    "tenantId":"${tenantId}",
+    "secret": "${secret}",
     "name": "MyMedicine",
-    "oAuthServerUrl": "https://au-syd.appid.cloud.ibm.com/oauth/v4/a05e4069-b9c8-4286-b9e3-d6c79451561d",
-    "profilesUrl": "https://au-syd.appid.cloud.ibm.com",
-    "discoveryEndpoint": "https://au-syd.appid.cloud.ibm.com/oauth/v4/a05e4069-b9c8-4286-b9e3-d6c79451561d/.well-known/openid-configuration",
-    "redirectUri": "http://mvpmymedicine.mybluemix.net/ibm/cloud/appid/callback",
+    "oAuthServerUrl": "${oAuthServerUrl}",
+    "profilesUrl": "${profilesUrl}",
+    "discoveryEndpoint": "${discoveryEndpoint}",
+    "redirectUri": "${redirectUri}",
     "type": "regularwebapp",
     "scopes": []
 }
