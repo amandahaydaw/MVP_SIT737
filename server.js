@@ -17,6 +17,9 @@ const JWT_SECRET = require('./configurations/env.js');
 const CALLBACK_URL = "/ibm/cloud/appid/callback";
 var port = process.env.PORT || 8080;
 const WebAppStrategy = appID.WebAppStrategy;
+
+
+app.use(express.static(__dirname + '/views'));
 app.use(express.static(__dirname + '/public'));
 app.use(session({
     secret: '123456',
@@ -230,7 +233,7 @@ function getAppId() {
 
 
 var server = app.listen(port, function() {
-    console.log(' Server listening on http://' + "localhost" + ':' + port + "/home.html")
+    console.log(' Server listening on http://' + "localhost" + ':' + port)
 });
 
 

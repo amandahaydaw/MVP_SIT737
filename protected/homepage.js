@@ -1,64 +1,92 @@
-// $(document).ready(function() {
-//     //select the POPUP FRAME and show it
-//     $(".logo").hide().fadeIn(1000);
-// });
-var date = new Date();
-var days = new Array(7);
-days[0] = "Sunday";
-days[1] = "Monday";
-days[2] = "Tuesday";
-days[3] = "Wednesday";
-days[4] = "Thursday";
-days[5] = "Friday";
-days[6] = "Saturday";
-days[7] = "Sunday";
+$(document).ready(function() {
+    //select the POPUP FRAME and show it
+    $(".logo").hide().fadeIn(1000);
+});
+var d = new Date();
+var weekday = new Array(7);
+weekday[0] = "Sunday";
+weekday[1] = "Monday";
+weekday[2] = "Tuesday";
+weekday[3] = "Wednesday";
+weekday[4] = "Thursday";
+weekday[5] = "Friday";
+weekday[6] = "Saturday";
+weekday[7] = "Sunday";
 
-var tday = new Date();
-var day = tday.getDate();
-var month = tday.getMonth() + 1;
-var year = tday.getFullYear();
+var today = new Date();
+var dd = today.getDate();
+var mm = today.getMonth() + 1; //January is 0!
+var yyyy = today.getFullYear();
 
-function formatday(day) {
+function formatDD(day) {
     if (day < 10) {
         return '0' + day
     }
     return day;
 }
 
-if (month < 10) {
-    month = '0' + month
+if (mm < 10) {
+    mm = '0' + mm
 }
 
-tday = month + '/' + (formatday(day)) + '/' + year;
-tomorrowday = day + 1;
-tomorrow = month + '/' + (formatday(tomorrowday)) + '/' + year;
+today = mm + '/' + (formatDD(dd)) + '/' + yyyy;
+console.log(today);
+tomorrowdd = dd + 1;
+tomorrow = mm + '/' + (formatDD(tomorrowdd)) + '/' + yyyy;
 
 function getDayName() {
-    $("#dayName").html(days[date.getDay()]);
+    $("#dayName").html(weekday[d.getDay()]);
 };
 
 function getCurrentDate() {
-    $("#currentDate").html(tday);
+    $("#currentDate").html(today);
 };
 
 function getTomorrowName() {
-    $("#tomorrowName").html(days[date.getDay() + 1]);
+    $("#tomorrowName").html(weekday[d.getDay() + 1]);
 }
 
 function getTomorrowDate() {
     $("#tomorrowDate").html(tomorrow);
 };
 
-/*DUmonthy Data to populate dashboard*/
-
-var text = ["Monday", [12546, 'xyz1', '250mg', '9:00 AM', 'Yes'],
-    [02546, 'xyz2', '100mg', '9:00 PM', 'No'],
-    [02546, 'xyz3', '50mg', '3:00 PM', 'No']
+/*DUmmy Data to populate dashboard*/
+var text = ["Monday", [12546, 'Advil', '7:00 AM', 'Yes'],
+    [02546, 'Adderall', '8:00 AM', 'No'],
+    [14746, 'Advil', '2:00 PM', 'No']
 ];
 
+/*Creates list for each dashboard*/
+function generateMedList(list) {
+    for (i = 1; i < list.length; i++) {
+        var takenIndicator = "<img class='col-xs-4 green-check' src='../images/emptyCircle.png' onclick=diffImage(this)>";
+        if (list[i][3] === 'Yes') {
+            takenIndicator = "<img class='col-xs-4 green-check' src='../images/greenCheck.png' onclick=diffImage(this)>"
+        }
+        $("#medicationList").append(
+            "<div class='row med-item col-xs-12'> \
+                <div class='row'> \
+                    <label id='medTime'>" + list[i][3] + "</label> \
+                    <img class='pull-right ellipses' src='../images/ellipses.png' onclick='location.href=\"EditMedi.html\"'> \
+                </div> \
+                <div class='row'> \
+                    " + takenIndicator + "\
+                    <div class='col-xs-5 medName'>" + list[i][1] + "</div> \
+                    <div class='col-xs-3 medDosage'>" + list[i][2] + "</div> \
+                </div> \
+            </div>"
+        );
+    }
+};
 
-/*adays anotehr time conatiner to the AdayMedi page*/
-function adayAnotherTime() {
+/*Changes image on whether or not a person took their pill*/
+function diffImage(img) {
+    if (img.src.match("../images/emptyCircle.png")) img.src = "../images/greenCheck.png";
+    else img.src = "../images/emptyCircle.png";
+}
+
+/*adds anotehr time conatiner to the AddMedi page*/
+function addAnotherTime() {
     $("#time").append($(".timecontainer").html());
 };
 /*scrolls the right arrow as the window scrolls*/
