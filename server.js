@@ -47,7 +47,7 @@ app.use('/protected', express.static("protected"));
 
 app.get("/logout", (req, res) => {
     WebAppStrategy.logout(req);
-    res.redirect("/home.html");
+    res.redirect("/index.html");
 });
 
 app.use(bodyParser.json()) //converting to json payload
