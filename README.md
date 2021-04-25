@@ -1,4 +1,5 @@
-##Getting Started:
+##Getting Started:-
+------------------------
 
 This is a sample of MVP pf SIT373 project demostarting a browser app for medication remonder which send a reminder to enduser for theri presicbed medication
 
