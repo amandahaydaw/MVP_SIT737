@@ -67,7 +67,7 @@ function generateMedList(list) {
             "<div class='row med-item col-xs-12'> \
                 <div class='row'> \
                     <label id='medTime'>" + list[i][3] + "</label> \
-                    <img class='pull-right ellipses' src='../images/ellipses.png' onclick='location.href=\"EditMedi.html\"'> \
+                    <img class='pull-right ellipses' src='../images/ellipses.png' onclick='location.href=\"./EditMedi.html\"'> \
                 </div> \
                 <div class='row'> \
                     " + takenIndicator + "\
